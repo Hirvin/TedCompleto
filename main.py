@@ -12,6 +12,10 @@ from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
 from PyQt5.QtWidgets import QMainWindow,QWidget, QPushButton, QAction
 from PyQt5.QtGui import QIcon
 import sys
+
+# Constantes del sistema
+_PATH_VIDEO = "/home/uidk4253/Documents/Hirvin/Projectos/Ted/video.mp4"
+
  
 class VideoWindow(QMainWindow):
  
@@ -24,36 +28,17 @@ class VideoWindow(QMainWindow):
         videoWidget = QVideoWidget()
  
         self.playButton = QPushButton()
-        self.playButton.setEnabled(False)
         self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-        self.playButton.clicked.connect(self.play)
+        self.playButton.clicked.connect(self.play_button)
  
         self.positionSlider = QSlider(Qt.Horizontal)
         self.positionSlider.setRange(0, 0)
         self.positionSlider.sliderMoved.connect(self.setPosition)
  
         self.errorLabel = QLabel()
+        self.errorLabel.setText("Este es el ejemplo de una etiqueta")
         self.errorLabel.setSizePolicy(QSizePolicy.Preferred,
                 QSizePolicy.Maximum)
- 
-        # Create new action
-        openAction = QAction(QIcon('open.png'), '&Open', self)        
-        openAction.setShortcut('Ctrl+O')
-        openAction.setStatusTip('Open movie')
-        openAction.triggered.connect(self.openFile)
- 
-        # Create exit action
-        exitAction = QAction(QIcon('exit.png'), '&Exit', self)        
-        exitAction.setShortcut('Ctrl+Q')
-        exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(self.exitCall)
- 
-        # Create menu bar and add action
-        menuBar = self.menuBar()
-        fileMenu = menuBar.addMenu('&File')
-        #fileMenu.addAction(newAction)
-        fileMenu.addAction(openAction)
-        fileMenu.addAction(exitAction)
  
         # Create a widget for window contents
         wid = QWidget(self)
@@ -73,25 +58,22 @@ class VideoWindow(QMainWindow):
         # Set widget to contain window contents
         wid.setLayout(layout)
  
+        # conectando la senales
         self.mediaPlayer.setVideoOutput(videoWidget)
         self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
         self.mediaPlayer.durationChanged.connect(self.durationChanged)
         self.mediaPlayer.error.connect(self.handleError)
+
+        # incializando el video de forma automatica
+        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(_PATH_VIDEO)))
+        self.mediaPlayer.play()
  
-    def openFile(self):
-        fileName, _ = QFileDialog.getOpenFileName(self, "Open Movie",
-                QDir.homePath())
- 
-        if fileName != '':
-            self.mediaPlayer.setMedia(
-                    QMediaContent(QUrl.fromLocalFile(fileName)))
-            self.playButton.setEnabled(True)
- 
+    # salida de la applicacion
     def exitCall(self):
         sys.exit(app.exec_())
         
-    def play(self):
+    def play_button(self):
         if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
             self.mediaPlayer.pause()
         else:
@@ -106,6 +88,10 @@ class VideoWindow(QMainWindow):
                     self.style().standardIcon(QStyle.SP_MediaPlay))
  
     def positionChanged(self, position):
+        #if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+        #    if position > 10000:
+        #        print position
+        #        self.mediaPlayer.pause()
         self.positionSlider.setValue(position)
  
     def durationChanged(self, duration):
