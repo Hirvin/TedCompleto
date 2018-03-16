@@ -37,13 +37,16 @@ class VideoPlayer(object):
         self.video_slider.sliderMoved.connect(self.set_new_video_position)
 
     def video_handle_error(self):
+        """Imprime los errores relaciones con el video player"""
         #self.playButton.setEnabled(False)
         print "Error Video: " + self.media_player.errorString()
 
     def set_new_video_position(self, position):
+        """actualiza la posicion del video cuando el slider cambia"""
         self.media_player.setPosition(position)
 
     def position_changed(self, position):
+        """sincroniza la posicion del slider con la del video"""
         #if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
         #    if position > 10000:
         #        print position
@@ -51,6 +54,7 @@ class VideoPlayer(object):
         self.video_slider.setValue(position)
 
     def duration_changed(self, duration):
+        """actualiza el rango del slider con cada nuevo video"""
         self.video_slider.setRange(0, duration)
 
     def set_video_file(self, video_path):
@@ -59,11 +63,10 @@ class VideoPlayer(object):
         self.media_player.play()
 
 class VideoWindow(QMainWindow):
- 
+    """Ventana Principal del Programa"""
     def __init__(self, parent=None):
         super(VideoWindow, self).__init__(parent)
-        self.setWindowTitle("PyQt Video Player Widget Example - pythonprogramminglanguage.com") 
-        
+        self.setWindowTitle("PyTedict")
         #self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         #videoWidget = QVideoWidget()
         self.video_player = VideoPlayer()
@@ -98,7 +101,6 @@ class VideoWindow(QMainWindow):
         # conectando la senales
         ## Recordar #######################################3
         #self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
-        
 
         # incializando el video de forma automatica
         self.video_player.set_video_file(_PATH_VIDEO)
