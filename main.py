@@ -14,7 +14,7 @@ from PyQt5.QtGui import QIcon
 import sys
 
 # Constantes del sistema
-_PATH_VIDEO = "/home/uidk4253/Documents/Hirvin/Projectos/Ted/video2.mp4"
+_PATH_VIDEO = "/home/uidk4253/Documents/Hirvin/Projectos/Ted/video.mp4"
 
 class VideoPlayer(object):
     """VideoPlayer, defines all methods for video player"""
@@ -31,10 +31,10 @@ class VideoPlayer(object):
         self.video_layout.addWidget(self.video_widget)
         self.video_layout.addWidget(self.video_slider)
         # signals
-        self.media_player.durationChanged.connect(self.duration_changed)
-        self.media_player.positionChanged.connect(self.position_changed)
-        self.media_player.error.connect(self.video_handle_error)
-        self.video_slider.sliderMoved.connect(self.set_new_video_position)
+        #self.media_player.durationChanged.connect(self.duration_changed)
+        #self.media_player.positionChanged.connect(self.position_changed)
+        #self.media_player.error.connect(self.video_handle_error)
+        #self.video_slider.sliderMoved.connect(self.set_new_video_position)
 
     def video_handle_error(self):
         """Imprime los errores relaciones con el video player"""

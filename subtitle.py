@@ -11,6 +11,7 @@ class SubFrameTime(object):
         self.min = 0
         self.sec = 0
         self.mil = 0
+        self.time_milis = 0
 
     def set_time(self, data):
         """ set time from data"""
@@ -19,9 +20,12 @@ class SubFrameTime(object):
         self.min = int(split_time[1])
         self.sec = int(split_time[2])
         self.mil = int(split_time[3])
+        self.time_milis = self.mil + (self.sec * 1000)
+        self.time_milis += self.min * 60 * 1000
+        self.time_milis += self.hour * 60 * 60 * 1000
 
     def __str__(self):
-        txt = "%d:%d:%d.%d" %(self.hour, self.min, self.sec, self.mil)
+        txt = "%d:%d:%d.%d => %d" %(self.hour, self.min, self.sec, self.mil, self.time_milis)
         return txt
 
 
@@ -33,7 +37,7 @@ class SubFrame(object):
         self.start_frame = SubFrameTime()
         self.end_frame = SubFrameTime()
         self.text = ""
-        self.show_text = ""
+        self.show_text = "" # hay que eliminarlo 
 
     def get_num_frame(self, data):
         """obtiene el numero de frame"""
@@ -47,7 +51,8 @@ class SubFrame(object):
 
     def get_text(self, data):
         self.text = data
-        self.show_text = re.sub(_SHOW_TEXT, "*", self.text)
+        if data[0] != '(':
+            self.show_text = re.sub(_SHOW_TEXT, "*", self.text)
 
     def __str__(self):
         num_txt = "num: %d\n" % self.num_frame
@@ -84,3 +89,5 @@ class Subtitle(object):
 
 subtitle = Subtitle("sub.srt")
 subtitle.get_frames()
+
+
