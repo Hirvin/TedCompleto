@@ -37,6 +37,7 @@ class SubFrame(object):
         self.start_frame = SubFrameTime()
         self.end_frame = SubFrameTime()
         self.text = ""
+        self.words = []
         self.show_text = "" # hay que eliminarlo 
 
     def get_num_frame(self, data):
@@ -51,8 +52,15 @@ class SubFrame(object):
 
     def get_text(self, data):
         self.text = data
-        if data[0] != '(':
-            self.show_text = re.sub(_SHOW_TEXT, "*", self.text)
+        self.words = self.text.split(' ')
+        #if data[0] != '(':
+        #    self.show_text = re.sub(_SHOW_TEXT, "*", self.text)
+
+    def get_end_time(self):
+        return self.end_frame.time_milis
+
+    def get_start_time(self):
+        return self.start_frame.time_milis
 
     def __str__(self):
         num_txt = "num: %d\n" % self.num_frame
@@ -65,16 +73,22 @@ class SubFrame(object):
 
 class Subtitle(object):
     """Subtitle class, contiene toda la info de los subtitulos"""
-    def __init__(self, txt_sub):
+    def __init__(self):
         self.list_frames = []
-        with open(txt_sub, 'r') as f_read:
+        self.num_frames = 0
+        self.frame_index = 0
+        self.read_data_list = []
+
+    def open_srt(self, txt_srt):
+        """ carga el archivo srt en el buffer read_data_list """
+        with open(txt_srt, 'r') as f_read:
             read_data = f_read.read()
             self.read_data_list = read_data.splitlines()
             self.read_data_list[0] = 1
             f_read.closed
 
     def get_frames(self):
-        """Imprime los errores relaciones con el video player"""
+        """lee el archivo str y lo convierte en frames"""
         while self.read_data_list:
             line = self.read_data_list.pop(0)
             if line == '':
@@ -84,10 +98,64 @@ class Subtitle(object):
             frame.get_time_frame(self.read_data_list.pop(0))
             frame.get_text(self.read_data_list.pop(0))
             self.list_frames.append(frame)
-            print frame
+            #print frame
+        self.num_frames = len(self.list_frames)
+
+    def set_srt_file(self, txt_srt):
+        """ abre el archivo srt y lo convierte en frames """
+        self.open_srt(txt_srt)
+        self.get_frames()
+
+    def next_frame(self):
+        """ retorna next frame, retorno None si ya no hay mas frames """
+        if self.frame_index < self.num_frames:
+            frame = self.list_frames[self.frame_index]
+            self.frame_index += 1
+            return frame
+        return None
+
+    def prev_frame(self):
+        """ retorna prev frame, retorna 0 en caso de ser el primero """
+        index = self.frame_index - 2
+        if index == -2:
+            index = 0
+        else:
+            if index == -1:
+                index = 1
+            self.frame_index -= 1
+        return self.list_frames[index]
 
 
-subtitle = Subtitle("sub.srt")
-subtitle.get_frames()
+
+
+class GFrame(object):
+    """ estructura para pasar argumentos facilmente """
+    def __init__(self):
+        self.frame1 = None
+        self.frame2 = None
+
+class GameFrame(object):
+    """ Controla todo lo relacionado con los subtitulos """
+    def __init__(self):
+        self.subtitle = Subtitle()
+        self.g_frame = GFrame()
+        #self.frame1 = None
+        #self.frame2 = None
+
+    def set_srt_file(self, txt_srt):
+        """ carga el archivo srt y obtiene los primeros frames """
+        self.subtitle.set_srt_file(txt_srt)
+        self.g_frame.frame1 = self.subtitle.next_frame()
+        self.g_frame.frame2 = self.subtitle.next_frame()
+
+    def get_end_time(self):
+        """ obtiene el tiempo final del GFrame """
+        return self.g_frame.frame2.get_end_time()
+
+    def get_start_time(self):
+        """ obtiene el tiempo incial del Gframe """
+        return self.g_frame.frame1.get_start_time()
+
+
 
 

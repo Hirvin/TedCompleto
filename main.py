@@ -2,6 +2,7 @@
 #!/usr/bin/env python
 # installar sudo apt-get install qtmultimedia5-examples
 
+# Todo - change video stop to pause
 
  
 from PyQt5.QtCore import QDir, Qt, QUrl
@@ -12,28 +13,137 @@ from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
 from PyQt5.QtWidgets import QMainWindow,QWidget, QPushButton, QAction
 from PyQt5.QtGui import QIcon
 import sys
+from subtitle import GameFrame
 
 # Constantes del sistema
 _PATH_VIDEO = "/home/uidk4253/Documents/Hirvin/Projectos/Ted/video.mp4"
+_PATH_SRT = "sub.srt"
+_SPACE_BT_WORD = 4
+_NUM_WORD_BY_SUB = 15
+
+class LbWord(object):
+    """ controla todo lo relacionado con una palabra """
+    def __init__(self):
+        self.label = QLabel()
+        self.cnt_letter = 2
+        self.cnt_word = 3
+        self.word = ''
+        #self.label.hide()
+        self.label.setText("X")
+
+    def set_word(self, word):
+        """setea la palabra"""
+        self.word = word
+        self.label.setText(word)
+        self.label.update()
+
+class SubView(object):
+    """ todo lo necesario para controlar la vista subtitle """
+    def __init__(self):
+        self.lb_list = []
+        self.layout = QHBoxLayout()
+        self.layout.setSpacing(_SPACE_BT_WORD)
+        # inicializaciones
+        self.create_labels()
+        self.set_layout()
+
+    def create_labels(self):
+        """ crea las 20 palabra por subtitulo"""
+        for i_index in range(_NUM_WORD_BY_SUB):
+            self.lb_list.append(LbWord())
+
+    def set_layout(self):
+        """set the layout with all the labels"""
+        self.layout.addStretch()
+        for i_index in range(_NUM_WORD_BY_SUB):
+            self.layout.addWidget(self.lb_list[i_index].label)
+        self.layout.addStretch()
+
+    def set_frame(self, frame):
+        if len(frame.words) >= _NUM_WORD_BY_SUB:
+            print "Error: se necesitan mas palabras %d" %(frame.words)
+            return False
+
+        num_words = len(frame.words)
+
+        for index, word in enumerate(frame.words):
+            self.lb_list[index].set_word(word)
+
+        for index in range(_NUM_WORD_BY_SUB - num_words):
+            self.lb_list[num_words + index].set_word(" ")
+
+        #self.layout.update()
+        #self.label.setText(frame.text)
+        return True
+
+class SubPanel(object):
+    """visualiza los subtitulos"""
+    def __init__(self):
+        self.layout = QVBoxLayout()
+        self.sub1_v = SubView()
+        self.sub2_v = SubView()
+
+        #configurando el panel
+        self.layout.addLayout(self.sub1_v.layout)
+        self.layout.addLayout(self.sub2_v.layout)
+
+    def set_frame(self, g_frame):
+        """ set frame """
+        self.sub1_v.set_frame(g_frame.frame1)
+        self.sub2_v.set_frame(g_frame.frame2)
+
+
+class VideoPlayerControl(object):
+    """ despliega botones Next, Prev and subtitles"""
+    def __init__(self):
+        self.ctrl_lay = QHBoxLayout()
+        self.prev_button = QPushButton("Prev")
+        self.next_button = QPushButton("Next")
+        self.sub_panel = SubPanel()
+
+        # creando la estrurua del box
+        self.ctrl_lay.addWidget(self.prev_button)
+        self.ctrl_lay.addLayout(self.sub_panel.layout)
+        self.ctrl_lay.addWidget(self.next_button)
+
+        #Configuraciones 
+        self.prev_button.setMaximumSize(60, 200)
+        self.next_button.setMaximumSize(60, 200)
+
+    def set_subtitle_view(self, g_frame):
+        """ set frame """
+        self.sub_panel.set_frame(g_frame)
+
 
 class VideoPlayer(object):
     """VideoPlayer, defines all methods for video player"""
     def __init__(self):
+        # flags
+        self.frame_time_start = 0
+        self.frame_time_end = 0
         #video elements
         self.video_widget = QVideoWidget()
         self.media_player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.media_player.setVideoOutput(self.video_widget)
+        self.video_control = VideoPlayerControl()
+
+        # subtitle elements
+        #self.subtitle_frames = Subtitle()
+        self.game_frame = GameFrame()
+
         # slider elements
         self.video_slider = QSlider(Qt.Horizontal)
         self.video_slider.setRange(0, 0)
-        # layout
+        # Video layout
         self.video_layout = QVBoxLayout()
         self.video_layout.addWidget(self.video_widget)
         self.video_layout.addWidget(self.video_slider)
+        self.video_layout.addLayout(self.video_control.ctrl_lay)
         # signals
-        #self.media_player.durationChanged.connect(self.duration_changed)
-        #self.media_player.positionChanged.connect(self.position_changed)
-        #self.media_player.error.connect(self.video_handle_error)
+        self.media_player.positionChanged.connect(self.duration_scheduler)
+        self.media_player.durationChanged.connect(self.duration_changed)
+        self.media_player.positionChanged.connect(self.position_changed)
+        self.media_player.error.connect(self.video_handle_error)
         #self.video_slider.sliderMoved.connect(self.set_new_video_position)
 
     def video_handle_error(self):
@@ -47,11 +157,14 @@ class VideoPlayer(object):
 
     def position_changed(self, position):
         """sincroniza la posicion del slider con la del video"""
-        #if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
-        #    if position > 10000:
-        #        print position
-        #        self.mediaPlayer.pause()
         self.video_slider.setValue(position)
+
+    def duration_scheduler(self, position):
+        if self.media_player.state() == QMediaPlayer.PlayingState:
+            if position > self.frame_time_end:
+                print position
+                # chage this for pause()
+                self.media_player.stop()
 
     def duration_changed(self, duration):
         """actualiza el rango del slider con cada nuevo video"""
@@ -60,6 +173,10 @@ class VideoPlayer(object):
     def set_video_file(self, video_path):
         """set de video and start to play it"""
         self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))
+        self.game_frame.set_srt_file(_PATH_SRT)
+        self.frame_time_start = 0
+        self.frame_time_end = self.game_frame.get_end_time()
+        self.video_control.set_subtitle_view(self.game_frame.g_frame)
         self.media_player.play()
 
 class VideoWindow(QMainWindow):

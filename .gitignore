@@ -1,3 +1,4 @@
 workspace/
 *.mp4
 *.srt
+*.pyc
