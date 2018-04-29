@@ -19,7 +19,10 @@ from subtitle import GameFrame
 _PATH_VIDEO = "/home/uidk4253/Documents/Hirvin/Projectos/Ted/video.mp4"
 _PATH_SRT = "sub.srt"
 _SPACE_BT_WORD = 4
-_NUM_WORD_BY_SUB = 15
+_NUM_WORD_BY_SUB = 18
+
+# variables de ambiente para la applicacion
+_EXTRA_BUFFER = 500
 
 class LbWord(object):
     """ controla todo lo relacionado con una palabra """
@@ -61,7 +64,7 @@ class SubView(object):
 
     def set_frame(self, frame):
         if len(frame.words) >= _NUM_WORD_BY_SUB:
-            print "Error: se necesitan mas palabras %d" %(frame.words)
+            print "Error: se necesitan mas palabras %d" %(len(frame.words))
             return False
 
         num_words = len(frame.words)
@@ -92,28 +95,61 @@ class SubPanel(object):
         self.sub1_v.set_frame(g_frame.frame1)
         self.sub2_v.set_frame(g_frame.frame2)
 
+class PrevButton(object):
+    """ controla el funcionamiento de los botones"""
+    def __init__(self):
+        self.button = QPushButton("Prev")
+        self.first_frame = True
+        self.button.setEnabled(False)
+        self.button.setMaximumSize(60, 200)
+
+    def enable(self):
+        if self.first_frame == True:
+            self.button.setEnabled(True)
+            self.first_frame = False
+
+class NextButton(object):
+    """ controla el funcionamiento dl button next """
+    def __init__(self):
+        self.button = QPushButton("Next")
+        self.button.setEnabled(False)
+        self.last_frame = False
+        self.button.setMaximumSize(60, 200)
+
+    def enable_first_frame(self):
+        print "entra aqui"
+        self.button.setEnabled(True)
 
 class VideoPlayerControl(object):
     """ despliega botones Next, Prev and subtitles"""
     def __init__(self):
         self.ctrl_lay = QHBoxLayout()
-        self.prev_button = QPushButton("Prev")
-        self.next_button = QPushButton("Next")
-        self.sub_panel = SubPanel()
+        #self.prev_button = QPushButton("Prev")
+        self.prev_button2 = PrevButton()
+        self.next_button2 = NextButton()
+
+        #self.next_button = QPushButton("Next")
+        #self.next_button.setEnabled(False)
+        # Hirvin
+        #self.sub_panel = SubPanel()
 
         # creando la estrurua del box
-        self.ctrl_lay.addWidget(self.prev_button)
-        self.ctrl_lay.addLayout(self.sub_panel.layout)
-        self.ctrl_lay.addWidget(self.next_button)
+        #self.ctrl_lay.addWidget(self.prev_button)
+        self.ctrl_lay.addWidget(self.prev_button2.button)
+        #Hirvin
+        #self.ctrl_lay.addLayout(self.sub_panel.layout)
+        #self.ctrl_lay.addWidget(self.next_button)
+        self.ctrl_lay.addWidget(self.next_button2.button)
 
         #Configuraciones 
-        self.prev_button.setMaximumSize(60, 200)
-        self.next_button.setMaximumSize(60, 200)
+        #self.prev_button.setMaximumSize(60, 200)
+        #self.next_button.setMaximumSize(60, 200)
 
     def set_subtitle_view(self, g_frame):
         """ set frame """
-        self.sub_panel.set_frame(g_frame)
-
+        #hirvin
+        #self.sub_panel.set_frame(g_frame)
+        pass
 
 class VideoPlayer(object):
     """VideoPlayer, defines all methods for video player"""
@@ -144,7 +180,13 @@ class VideoPlayer(object):
         self.media_player.durationChanged.connect(self.duration_changed)
         self.media_player.positionChanged.connect(self.position_changed)
         self.media_player.error.connect(self.video_handle_error)
+        self.video_control.next_button2.button.clicked.connect(self.next_clicked)
+ 
         #self.video_slider.sliderMoved.connect(self.set_new_video_position)
+
+    def play(self):
+        self.media_player.setPosition(self.frame_time_start)
+        self.media_player.play()
 
     def video_handle_error(self):
         """Imprime los errores relaciones con el video player"""
@@ -165,6 +207,9 @@ class VideoPlayer(object):
                 print position
                 # chage this for pause()
                 self.media_player.stop()
+                self.video_control.prev_button2.enable()
+                self.video_control.next_button2.enable_first_frame()
+
 
     def duration_changed(self, duration):
         """actualiza el rango del slider con cada nuevo video"""
@@ -178,6 +223,17 @@ class VideoPlayer(object):
         self.frame_time_end = self.game_frame.get_end_time()
         self.video_control.set_subtitle_view(self.game_frame.g_frame)
         self.media_player.play()
+
+    def next_clicked(self):
+        """ next button presionado """
+        print "next fue precionado"
+        self.video_control.next_button2.button.setText("Hola")
+        g_frame = self.game_frame.get_next()
+        self.frame_time_start = self.game_frame.get_start_time() 
+        self.frame_time_end = self.game_frame.get_end_time() + _EXTRA_BUFFER
+        print "start: %d end: %d" % (self.frame_time_start, self.frame_time_end)
+        self.video_control.set_subtitle_view(g_frame)
+        self.play()
 
 class VideoWindow(QMainWindow):
     """Ventana Principal del Programa"""

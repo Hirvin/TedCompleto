@@ -148,6 +148,11 @@ class GameFrame(object):
         self.g_frame.frame1 = self.subtitle.next_frame()
         self.g_frame.frame2 = self.subtitle.next_frame()
 
+    def get_next(self):
+        self.g_frame.frame1 = self.subtitle.next_frame()
+        self.g_frame.frame2 = self.subtitle.next_frame()
+        return self.g_frame
+
     def get_end_time(self):
         """ obtiene el tiempo final del GFrame """
         return self.g_frame.frame2.get_end_time()
