@@ -124,22 +124,17 @@ class VideoPlayerControl(object):
     """ despliega botones Next, Prev and subtitles"""
     def __init__(self):
         self.ctrl_lay = QHBoxLayout()
-        #self.prev_button = QPushButton("Prev")
-        self.prev_button2 = PrevButton()
-        self.next_button2 = NextButton()
+        self.prev_button = PrevButton()
+        self.next_button = NextButton()
 
-        #self.next_button = QPushButton("Next")
-        #self.next_button.setEnabled(False)
-        # Hirvin
-        #self.sub_panel = SubPanel()
+
+        self.sub_panel = SubPanel()
 
         # creando la estrurua del box
-        #self.ctrl_lay.addWidget(self.prev_button)
-        self.ctrl_lay.addWidget(self.prev_button2.button)
+        self.ctrl_lay.addWidget(self.prev_button.button)
         #Hirvin
-        #self.ctrl_lay.addLayout(self.sub_panel.layout)
-        #self.ctrl_lay.addWidget(self.next_button)
-        self.ctrl_lay.addWidget(self.next_button2.button)
+        self.ctrl_lay.addLayout(self.sub_panel.layout)
+        self.ctrl_lay.addWidget(self.next_button.button)
 
         #Configuraciones 
         #self.prev_button.setMaximumSize(60, 200)
@@ -148,7 +143,7 @@ class VideoPlayerControl(object):
     def set_subtitle_view(self, g_frame):
         """ set frame """
         #hirvin
-        #self.sub_panel.set_frame(g_frame)
+        self.sub_panel.set_frame(g_frame)
         pass
 
 class VideoPlayer(object):
@@ -180,7 +175,7 @@ class VideoPlayer(object):
         self.media_player.durationChanged.connect(self.duration_changed)
         self.media_player.positionChanged.connect(self.position_changed)
         self.media_player.error.connect(self.video_handle_error)
-        self.video_control.next_button2.button.clicked.connect(self.next_clicked)
+        self.video_control.next_button.button.clicked.connect(self.next_clicked)
  
         #self.video_slider.sliderMoved.connect(self.set_new_video_position)
 
