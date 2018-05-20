@@ -14,12 +14,14 @@ from PyQt5.QtWidgets import QMainWindow,QWidget, QPushButton, QAction
 from PyQt5.QtGui import QIcon
 import sys
 from subtitle import GameFrame
+import time
 
 # Constantes del sistema
 _PATH_VIDEO = "/home/uidk4253/Documents/Hirvin/Projectos/Ted/video.mp4"
 _PATH_SRT = "sub.srt"
-_SPACE_BT_WORD = 4
+_SPACE_BT_WORD = 0
 _NUM_WORD_BY_SUB = 18
+_NUM_LETTER_BY_SUB = 80
 
 # variables de ambiente para la applicacion
 _EXTRA_BUFFER = 500
@@ -40,6 +42,14 @@ class LbWord(object):
         self.label.setText(word)
         self.label.update()
 
+class LbLetter(object):
+    """ controlo todo lo relacionado con una letra"""
+    def __init__(self):
+        self.label = QLabel()
+        # contados de errore al escribir
+        self.cnt_error = 2
+        self.label.setText("X")
+
 class SubView(object):
     """ todo lo necesario para controlar la vista subtitle """
     def __init__(self):
@@ -49,34 +59,73 @@ class SubView(object):
         # inicializaciones
         self.create_labels()
         self.set_layout()
+        self.text = ""
 
     def create_labels(self):
         """ crea las 20 palabra por subtitulo"""
-        for i_index in range(_NUM_WORD_BY_SUB):
-            self.lb_list.append(LbWord())
+        # old version
+        #for i_index in range(_NUM_WORD_BY_SUB):
+        #    self.lb_list.append(LbWord())
+
+        # new version
+        for i_index in range(_NUM_LETTER_BY_SUB):
+            self.lb_list.append(LbLetter())
+
 
     def set_layout(self):
         """set the layout with all the labels"""
+        # old version
+        #self.layout.addStretch()
+        #for i_index in range(_NUM_WORD_BY_SUB):
+        #    self.layout.addWidget(self.lb_list[i_index].label)
+        #self.layout.addStretch()
+
+        # new version
         self.layout.addStretch()
-        for i_index in range(_NUM_WORD_BY_SUB):
+        for i_index in range(_NUM_LETTER_BY_SUB):
             self.layout.addWidget(self.lb_list[i_index].label)
         self.layout.addStretch()
 
+    def clean(self):
+        """ limpia todos los caracteres del layout """
+        for e in self.lb_list:
+            e.label.setText(" ")
+
+
     def set_frame(self, frame):
-        if len(frame.words) >= _NUM_WORD_BY_SUB:
-            print "Error: se necesitan mas palabras %d" %(len(frame.words))
-            return False
+        # old implementation
+        #if len(frame.words) >= _NUM_WORD_BY_SUB:
+        #    print "Error: se necesitan mas palabras %d" %(len(frame.words))
+        #    return False
 
-        num_words = len(frame.words)
+        #num_words = len(frame.words)
 
-        for index, word in enumerate(frame.words):
-            self.lb_list[index].set_word(word)
+        #for index, word in enumerate(frame.words):
+        #    self.lb_list[index].set_word(word)
 
-        for index in range(_NUM_WORD_BY_SUB - num_words):
-            self.lb_list[num_words + index].set_word(" ")
+        #for index in range(_NUM_WORD_BY_SUB - num_words):
+        #    self.lb_list[num_words + index].set_word(" ")
 
         #self.layout.update()
         #self.label.setText(frame.text)
+        #return True
+
+        self.clean()
+        free = _NUM_LETTER_BY_SUB - frame.len
+        shift = free / 2
+        #print "len: %d free: %d shift: %d" % (frame.len, free, free/2)
+        self.text = " "*shift + frame.text
+        #print frame.text
+        #print self.text
+        if frame.len >= _NUM_LETTER_BY_SUB:
+            print "Error: se necesitan mas palabras %d" %(frame.len)
+            return False
+
+        index = 0
+        for t in self.text:
+            self.lb_list[index].label.setText(t)
+            index += 1
+
         return True
 
 class SubPanel(object):
@@ -92,8 +141,12 @@ class SubPanel(object):
 
     def set_frame(self, g_frame):
         """ set frame """
-        self.sub1_v.set_frame(g_frame.frame1)
-        self.sub2_v.set_frame(g_frame.frame2)
+        # hirvin cambiar todo esto
+        if ((self.sub1_v.set_frame(g_frame.frame1))==False):
+            return False
+        if ((self.sub2_v.set_frame(g_frame.frame2))==False):
+            return False
+        return True
 
 class PrevButton(object):
     """ controla el funcionamiento de los botones"""
@@ -132,17 +185,12 @@ class VideoPlayerControl(object):
 
         # creando la estrurua del box
         self.ctrl_lay.addWidget(self.prev_button.button)
-        #Hirvin
         self.ctrl_lay.addLayout(self.sub_panel.layout)
         self.ctrl_lay.addWidget(self.next_button.button)
 
-        #Configuraciones 
-        #self.prev_button.setMaximumSize(60, 200)
-        #self.next_button.setMaximumSize(60, 200)
-
     def set_subtitle_view(self, g_frame):
         """ set frame """
-        #hirvin
+        # set frame habilitar cuando este listo los subtitulos
         self.sub_panel.set_frame(g_frame)
         pass
 
@@ -180,7 +228,8 @@ class VideoPlayer(object):
         #self.video_slider.sliderMoved.connect(self.set_new_video_position)
 
     def play(self):
-        self.media_player.setPosition(self.frame_time_start)
+        #hirvin
+        #self.media_player.setPosition(self.frame_time_start)
         self.media_player.play()
 
     def video_handle_error(self):
@@ -201,9 +250,11 @@ class VideoPlayer(object):
             if position > self.frame_time_end:
                 print position
                 # chage this for pause()
-                self.media_player.stop()
-                self.video_control.prev_button2.enable()
-                self.video_control.next_button2.enable_first_frame()
+                # hirvin
+                #self.media_player.stop()
+                self.media_player.pause()
+                self.video_control.prev_button.enable()
+                self.video_control.next_button.enable_first_frame()
 
 
     def duration_changed(self, duration):
@@ -221,13 +272,14 @@ class VideoPlayer(object):
 
     def next_clicked(self):
         """ next button presionado """
-        print "next fue precionado"
-        self.video_control.next_button2.button.setText("Hola")
+        #print "next fue precionado"
+        #self.video_control.next_button.button.setText("Hola")
         g_frame = self.game_frame.get_next()
-        self.frame_time_start = self.game_frame.get_start_time() 
+        #self.frame_time_start = self.game_frame.get_start_time() 
         self.frame_time_end = self.game_frame.get_end_time() + _EXTRA_BUFFER
-        print "start: %d end: %d" % (self.frame_time_start, self.frame_time_end)
+        #print "start: %d end: %d" % (self.frame_time_start, self.frame_time_end)
         self.video_control.set_subtitle_view(g_frame)
+        time.sleep(1)
         self.play()
 
 class VideoWindow(QMainWindow):

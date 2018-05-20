@@ -37,6 +37,7 @@ class SubFrame(object):
         self.start_frame = SubFrameTime()
         self.end_frame = SubFrameTime()
         self.text = ""
+        self.len = 0
         self.words = []
         self.show_text = "" # hay que eliminarlo 
 
@@ -52,10 +53,11 @@ class SubFrame(object):
 
     def get_text(self, data):
         self.text = data
-        self.words = self.text.split(' ')
-        #if data[0] != '(':
-        #    self.show_text = re.sub(_SHOW_TEXT, "*", self.text)
+        self.len = len(self.text)
 
+        # esto podria estar obsoleto
+        #self.words = self.text.split(' ')
+        
     def get_end_time(self):
         return self.end_frame.time_milis
 
