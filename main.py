@@ -1,6 +1,8 @@
 # PyQt5 Video player
 #!/usr/bin/env python
 # installar sudo apt-get install qtmultimedia5-examples
+# sudo apt-get install 
+# git push -u origin master // para subir 
 
 # Todo - change video stop to pause
 
